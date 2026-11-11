@@ -1,5 +1,7 @@
 # Athlete High-Risk Day Predictor
 
+Live Demo: https://ariskmodel.streamlit.app/
+
 A small, end-to-end machine learning project that flags **high-risk training days** for athletes from training load, sleep, and soreness. It includes a reusable model module and an interactive web app that works with your own CSV data.
 
 > **Important:** the built-in data is **synthetic**. The labeling rule was written by me, so the reported metrics show that the pipeline works, not how well the model would perform on real athletes. See [Limitations](#limitations).
