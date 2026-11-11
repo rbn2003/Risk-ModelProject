@@ -22,6 +22,8 @@ st.caption(
     "Logistic regression with feature scaling, class weighting, and an "
     "athlete-level train/test split. Bring your own CSV or use the synthetic sample."
 )
+st.caption("Demo of a modeling pipeline on synthetic data. Results are not validated on real "
+           "athletes. See the **About & limitations** tab.")
 
 
 @st.cache_data
@@ -55,6 +57,10 @@ if source == "Synthetic sample":
         mime="text/csv",
     )
 else:
+    st.sidebar.warning(
+        "Privacy: don't upload personal, identifiable, or confidential athlete data "
+        "to a public demo. Use synthetic or fully de-identified data only."
+    )
     uploaded = st.sidebar.file_uploader("Upload a CSV file", type="csv")
     if uploaded is None:
         st.info("Upload a CSV in the sidebar to begin, or switch to the synthetic sample. "
@@ -120,7 +126,8 @@ if train_clicked:
 # ------------------------------------------------------------------
 # Main area
 # ------------------------------------------------------------------
-tab_data, tab_results, tab_predict = st.tabs(["Data", "Results", "What-if prediction"])
+tab_data, tab_results, tab_predict, tab_about = st.tabs(
+    ["Data", "Results", "What-if prediction", "About & limitations"])
 
 with tab_data:
     c1, c2, c3 = st.columns(3)
@@ -211,3 +218,51 @@ with tab_predict:
         if out_of_range:
             st.warning("These values are outside the range the model was trained on, so the "
                        "prediction is an extrapolation: " + ", ".join(out_of_range))
+
+with tab_about:
+    st.header("About this app")
+    st.markdown("""
+This app trains a **logistic regression** model to flag **high-risk training days** for athletes
+from numeric daily measurements (for example training load, sleep, and soreness), then shows how
+well it works on athletes it has never seen.
+
+**Source code:** https://github.com/rbn2003/Risk-ModelProject
+""")
+
+    st.subheader("How it works")
+    st.markdown("""
+1. **Data:** one row per athlete-day, numeric features, and a two-valued label marking high-risk days.
+2. **Split:** if an athlete ID column is chosen, whole athletes are held out for testing, so the model
+   is never evaluated on athletes it saw in training. Without an ID column a random split is used
+   and results may look better than they are.
+3. **Scaling:** features are standardized (using training data only) so they share one scale.
+4. **Model:** logistic regression with class weighting, because high-risk days are usually the minority.
+5. **Evaluation:** AUC, precision, recall, accuracy, a confusion matrix, an ROC curve, a
+   majority-class baseline, and 5-fold cross-validation.
+""")
+
+    st.subheader("What the numbers mean")
+    st.markdown("""
+- **AUC:** how well the model ranks high-risk days above normal days. 0.5 is chance, 1.0 is perfect.
+- **Recall:** of the truly high-risk days, the share the model flagged.
+- **Precision:** of the days the model flagged, the share that were truly high-risk.
+- **Threshold:** the probability cutoff for flagging a day. Lowering it raises recall and lowers
+  precision; raising it does the opposite.
+- **Baseline accuracy:** the accuracy of always predicting the most common class. Accuracy alone
+  can be misleading when high-risk days are rare, so compare AUC, recall, and precision too.
+- **Coefficients:** features are standardized, so sizes are comparable. Positive raises predicted
+  risk, negative lowers it. They describe association in this dataset, not cause and effect.
+""")
+
+    st.subheader("Limitations")
+    st.markdown("""
+- **The built-in sample is synthetic.** Its labels come from a formula written by the author, shaped
+  like the one logistic regression assumes, so it favors this model. The metrics show the pipeline
+  works, not how it would perform on real athletes.
+- **Each day is treated independently.** Apart from one engineered feature (today's load relative to the
+  previous 7 days), the model does not use day-to-day sequences.
+- **Not a medical or coaching tool.** It has not been validated on real injury data and should not
+  inform real training decisions.
+- **Splits are not time-ordered.** A real deployment would train on earlier data and test on later data.
+- **Uploaded data:** please upload only synthetic or fully de-identified data to a public demo.
+""")
